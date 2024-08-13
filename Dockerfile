@@ -63,14 +63,9 @@ COPY --from=builder /usr/local/bin/chromedriver /usr/local/bin/chromedriver
 
 WORKDIR /app
 
-# Ensure the .local directory exists
-RUN mkdir -p /root/.local
-
 # Copy only the dependencies from the builder stage
-COPY --from=builder /root/.local /root/.local
-
-# Set PATH to include the local bin directory
-ENV PATH="/root/.local/bin:$PATH"
+COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy application files
 COPY . .
