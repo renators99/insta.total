@@ -71,6 +71,14 @@ steps:
         done
         wait
 
+  # List the services URLs
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud run services list --platform managed --format="value(status.url)" | tee services_urls.txt
+
 timeout: '1200s'
 
 options:
