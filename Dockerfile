@@ -32,7 +32,7 @@ WORKDIR /app
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN pip install --user -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Stage 2: Final stage
 FROM --platform=linux/amd64 python:3.10-slim
@@ -82,4 +82,4 @@ RUN mkdir -p /app/data
 EXPOSE 80
 
 # Set the entrypoint
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
