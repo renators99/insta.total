@@ -33,7 +33,7 @@ def apply_filters(driver, date_option):
     tools_button.click()
     
     advanced_search_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Búsqueda avanzada')]"))
+        EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Búsqueda avanzada') or contains(text(), 'Advanced search')]"))
     )
     advanced_search_button.click()
 
@@ -42,22 +42,22 @@ def apply_filters(driver, date_option):
     )
     region_button.click()
     us_option = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//li[@value='countryUS']//div[contains(text(), 'Estados Unidos')]"))
+        EC.element_to_be_clickable((By.XPATH, "//li[@value='countryUS']//div[contains(text(), 'Estados Unidos') or contains(text(), 'United States')]"))
     )
     us_option.click()
 
     search_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//input[@value='Búsqueda avanzada']"))
+        EC.element_to_be_clickable((By.XPATH, "//input[@value='Búsqueda avanzada' or @value='Advanced search']"))
     )
     search_button.click()
 
     any_date_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'De cualquier fecha')]"))
+        EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'De cualquier fecha') or contains(text(), 'Any time')]"))
     )
     any_date_button.click()
 
     customize_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//span[@role='menuitem' and contains(text(), 'Personalizar...')]"))
+        EC.element_to_be_clickable((By.XPATH, "//span[@role='menuitem' and (contains(text(), 'Personalizar...') or contains(text(), 'Custom range...'))]"))
     )
     customize_button.click()
 
@@ -70,7 +70,7 @@ def apply_filters(driver, date_option):
     end_date_input.send_keys(end_date)
 
     go_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//g-button[contains(@class, 'Ru1Ao BwGU8e fE5Rge')]"))
+        EC.element_to_be_clickable((By.XPATH, "//g-button[contains(@class, 'Ru1Ao BwGU8e fE5Rge') or contains(@class, 'Ru1Ao BwGU8e fE5Rge')]"))
     )
     go_button.click()
 
