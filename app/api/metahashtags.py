@@ -18,7 +18,7 @@ async def run_selenium(search_term: str = Query(..., description="The hashtag or
     os.makedirs(download_dir, exist_ok=True)
     
     driver = init_driver()
-    wait = WebDriverWait(driver, 30)
+    wait = WebDriverWait(driver, 60)
     
     try:
         url = 'https://metahashtags.com/login'
