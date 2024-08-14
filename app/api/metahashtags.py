@@ -1,5 +1,5 @@
 # app/api/metahashtags.py
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, UploadFile, File, Query, HTTPException
 from fastapi.responses import FileResponse
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
@@ -9,6 +9,8 @@ from app.utils.selenium_driver import init_driver
 import os
 from datetime import datetime
 import time
+import pandas as pd
+import zipfile
 
 router = APIRouter()
 
@@ -71,10 +73,51 @@ async def run_selenium(search_term: str = Query(..., description="The hashtag or
         
         driver.quit()
         
-        # Devolver el archivo como parte de la respuesta
-        return FileResponse(new_csv_file_path, filename=f"{search_term}_{current_date}.csv")
+        # Devolver la ruta del archivo CSV creado
+        return new_csv_file_path
     
     except Exception as e:
         driver.quit()
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post("/batch-metahashtags/")
+async def batch_metahashtags(file: UploadFile = File(...)):
+    # Crear una carpeta para guardar el archivo cargado y los resultados
+    upload_dir = os.path.join(os.getcwd(), "uploads")
+    batch_download_dir = os.path.join(os.getcwd(), "Batch_Data")
+    os.makedirs(upload_dir, exist_ok=True)
+    os.makedirs(batch_download_dir, exist_ok=True)
+
+    try:
+        # Guardar el archivo cargado
+        file_path = os.path.join(upload_dir, file.filename)
+        with open(file_path, "wb") as f:
+            f.write(file.file.read())
+        
+        # Leer el archivo XLSX
+        df = pd.read_excel(file_path, sheet_name='Sheet1')
+        
+        # Verificar si la columna 'Target' existe
+        if 'Target' not in df.columns:
+            raise HTTPException(status_code=400, detail=f"Column 'Target' not found in XLSX. Available columns: {df.columns.tolist()}")
+        
+        csv_files = []
+        
+        # Iterar sobre las filas para obtener los hashtags
+        for index, row in df.iterrows():
+            print(f"Processing row {index + 1}")  # Imprimir el número de la fila que se está procesando
+            hashtag = row['Target']
+            if pd.notna(hashtag):
+                csv_file_path = await run_selenium(search_term=hashtag.strip('#'))
+                csv_files.append(csv_file_path)
+        
+        # Crear un archivo ZIP con todos los CSV generados
+        zip_file_path = os.path.join(batch_download_dir, "MetaHashtags_Batch_" + datetime.now().strftime("%Y-%m-%d") + ".zip")
+        with zipfile.ZipFile(zip_file_path, 'w') as zipf:
+            for file in csv_files:
+                zipf.write(file, os.path.basename(file))
+        
+        return {"message": f"Batch processing completed successfully. The zip file is located at {zip_file_path}"}
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
