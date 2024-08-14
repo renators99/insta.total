@@ -5,27 +5,12 @@ import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from app.utils.selenium_driver import init_driver
 import os
 from datetime import datetime
 import time
 
 router = APIRouter()
-
-def init_driver():
-    chrome_options = uc.ChromeOptions()
-    chrome_prefs = {
-        "download.default_directory": os.path.join(os.getcwd(), "data"),
-        "download.prompt_for_download": False,
-        "download.directory_upgrade": True,
-        "safebrowsing.enabled": True
-    }
-    chrome_options.add_experimental_option("prefs", chrome_prefs)
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--window-size=1920,1080")
-    chrome_options.add_argument("--headless")
-    driver = uc.Chrome(options=chrome_options, use_subprocess=False)
-    return driver
 
 @router.get("/search-metahashtags/")
 async def run_selenium(search_term: str = Query(..., description="The hashtag or term to search for")):
@@ -55,6 +40,8 @@ async def run_selenium(search_term: str = Query(..., description="The hashtag or
         search_input.send_keys(search_term)
         search_button = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "search-button")))
         search_button.click()
+        
+        time.sleep(30)
         
         # 1. Esperar a que el elemento <li> con la clase específica esté presente
         list_item = wait.until(EC.presence_of_element_located((By.XPATH, f"//li[contains(@class, 'list-group-item card hashtag') and .//button[@data-htag='{search_term}']]")))

@@ -1,6 +1,6 @@
 # app/api/insta_profile_generator.py
 from fastapi import APIRouter, HTTPException, Query
-from app.utils.selenium_driver import configure_driver
+from app.utils.selenium_driver import init_driver
 from app.utils.search_tools import (
     calculate_dates, 
     search_on_google, 
@@ -16,7 +16,7 @@ router = APIRouter()
 @router.get("/search-google/", response_model=SearchResult)
 def google_search_with_tools(search_term: str = Query(...), date_option: int = Query(...)):
     try:
-        driver = configure_driver()
+        driver = init_driver()
         search_on_google(driver, search_term)
         apply_filters(driver, date_option)
         result_count = extract_result_count(driver)
