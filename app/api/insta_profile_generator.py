@@ -13,8 +13,8 @@ from app.schemas import SearchResult  # Import the data models
 
 router = APIRouter()
 
-@router.get("/search/", response_model=SearchResult)
-def google_search_with_tools(search_term: str = Query(...), date_option: str = Query(...)):
+@router.get("/search-google/", response_model=SearchResult)
+def google_search_with_tools(search_term: str = Query(...), date_option: int = Query(...)):
     try:
         driver = configure_driver()
         search_on_google(driver, search_term)

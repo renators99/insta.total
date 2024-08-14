@@ -27,7 +27,7 @@ def init_driver():
     driver = uc.Chrome(options=chrome_options, use_subprocess=False)
     return driver
 
-@router.get("/search/")
+@router.get("/search-metahashtags/")
 async def run_selenium(search_term: str = Query(..., description="The hashtag or term to search for")):
     download_dir = os.path.join(os.getcwd(), "Data")
     os.makedirs(download_dir, exist_ok=True)
