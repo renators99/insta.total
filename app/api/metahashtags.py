@@ -42,9 +42,7 @@ async def run_selenium(search_term: str = Query(..., description="The hashtag or
         search_input.send_keys(search_term)
         search_button = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "search-button")))
         search_button.click()
-        
-        time.sleep(30)
-        
+                
         # 1. Esperar a que el elemento <li> con la clase específica esté presente
         list_item = wait.until(EC.presence_of_element_located((By.XPATH, f"//li[contains(@class, 'list-group-item card hashtag') and .//button[@data-htag='{search_term}']]")))
         
@@ -82,42 +80,69 @@ async def run_selenium(search_term: str = Query(..., description="The hashtag or
 
 @router.post("/batch-metahashtags/")
 async def batch_metahashtags(file: UploadFile = File(...)):
-    # Crear una carpeta para guardar el archivo cargado y los resultados
-    upload_dir = os.path.join(os.getcwd(), "uploads")
+    # Crear una carpeta para guardar los resultados en Batch_Data
     batch_download_dir = os.path.join(os.getcwd(), "Batch_Data")
-    os.makedirs(upload_dir, exist_ok=True)
     os.makedirs(batch_download_dir, exist_ok=True)
 
+    progress_file_path = os.path.join(batch_download_dir, "progress.txt")
+    failed_file_path = os.path.join(batch_download_dir, "failed.txt")
+
     try:
-        # Guardar el archivo cargado
-        file_path = os.path.join(upload_dir, file.filename)
-        with open(file_path, "wb") as f:
+        # Guardar el archivo cargado temporalmente
+        temp_file_path = os.path.join(batch_download_dir, file.filename)
+        with open(temp_file_path, "wb") as f:
             f.write(file.file.read())
         
         # Leer el archivo XLSX
-        df = pd.read_excel(file_path, sheet_name='Sheet1')
-        
+        df = pd.read_excel(temp_file_path, sheet_name='Sheet1')
+
         # Verificar si la columna 'Target' existe
         if 'Target' not in df.columns:
             raise HTTPException(status_code=400, detail=f"Column 'Target' not found in XLSX. Available columns: {df.columns.tolist()}")
-        
+
+        # Leer el progreso previo
+        start_index = 0
+        if os.path.exists(progress_file_path):
+            with open(progress_file_path, "r") as f:
+                start_index = int(f.read().strip())
+
         csv_files = []
-        
+
         # Iterar sobre las filas para obtener los hashtags
-        for index, row in df.iterrows():
+        for index in range(start_index, len(df)):
+            row = df.iloc[index]
             print(f"Processing row {index + 1}")  # Imprimir el número de la fila que se está procesando
             hashtag = row['Target']
             if pd.notna(hashtag):
-                csv_file_path = await run_selenium(search_term=hashtag.strip('#'))
-                csv_files.append(csv_file_path)
+                try:
+                    csv_file_path = await run_selenium(search_term=hashtag.strip('#'))
+                    csv_files.append(csv_file_path)
+                except Exception as e:
+                    # Registrar el hashtag fallido en el archivo failed.txt
+                    with open(failed_file_path, "a") as f:
+                        f.write(f"{hashtag}\n")
+                    print(f"Failed to process hashtag {hashtag}: {e}")
+                    continue
+            
+            # Guardar el progreso
+            with open(progress_file_path, "w") as f:
+                f.write(str(index + 1))
         
         # Crear un archivo ZIP con todos los CSV generados
         zip_file_path = os.path.join(batch_download_dir, "MetaHashtags_Batch_" + datetime.now().strftime("%Y-%m-%d") + ".zip")
         with zipfile.ZipFile(zip_file_path, 'w') as zipf:
             for file in csv_files:
                 zipf.write(file, os.path.basename(file))
-        
-        return {"message": f"Batch processing completed successfully. The zip file is located at {zip_file_path}"}
+
+        # Eliminar el archivo de progreso después de completar todo el procesamiento
+        if os.path.exists(progress_file_path):
+            os.remove(progress_file_path)
+
+        return {"message": f"Batch processing completed successfully. The zip file is located at {zip_file_path}. Failed hashtags are recorded in failed.txt"}
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Eliminar el archivo temporal
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
