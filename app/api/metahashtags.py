@@ -81,7 +81,7 @@ async def run_selenium(search_term: str = Query(..., description="The hashtag or
 @router.post("/batch-metahashtags/")
 async def batch_metahashtags(file: UploadFile = File(...)):
     # Crear una carpeta para guardar los resultados en Batch_Data
-    batch_download_dir = os.path.join(os.getcwd(), "Batch_Data")
+    batch_download_dir = os.path.join(os.getcwd(), "batch_data")
     os.makedirs(batch_download_dir, exist_ok=True)
 
     progress_file_path = os.path.join(batch_download_dir, "progress.txt")
