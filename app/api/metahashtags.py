@@ -16,7 +16,7 @@ router = APIRouter()
 
 @router.get("/search-metahashtags/")
 async def run_selenium(search_term: str = Query(..., description="The hashtag or term to search for")):
-    download_dir = os.path.join(os.getcwd(), "Data")
+    download_dir = os.path.join(os.getcwd(), "data")
     os.makedirs(download_dir, exist_ok=True)
     
     driver = init_driver()
