@@ -7,7 +7,8 @@ from app.utils.search_tools import (
     apply_filters, 
     extract_result_count, 
     extract_links,
-    save_json
+    save_json, 
+    check_for_captcha
 )
 from app.schemas import SearchResult  # Import the data models
 from selenium.common.exceptions import WebDriverException, TimeoutException, NoSuchElementException
@@ -22,6 +23,7 @@ def google_search_with_tools(search_term: str = Query(...), date_option: int = Q
         
         try:
             search_on_google(driver, search_term)
+            check_for_captcha(driver, "Google Search Initialization")
         except TimeoutException as te:
             raise HTTPException(status_code=504, detail="Timeout occurred during Google search initiation.") from te
         except NoSuchElementException as nse:
@@ -31,6 +33,7 @@ def google_search_with_tools(search_term: str = Query(...), date_option: int = Q
         
         try:
             apply_filters(driver, date_option)
+            check_for_captcha(driver, "Applying Filters")
         except TimeoutException as te:
             raise HTTPException(status_code=504, detail="Timeout occurred while applying search filters.") from te
         except NoSuchElementException as nse:
@@ -40,6 +43,7 @@ def google_search_with_tools(search_term: str = Query(...), date_option: int = Q
         
         try:
             result_count = extract_result_count(driver)
+            check_for_captcha(driver, "Extracting Result Count")
         except TimeoutException as te:
             raise HTTPException(status_code=504, detail="Timeout occurred while extracting result count.") from te
         except WebDriverException as we:
@@ -47,6 +51,7 @@ def google_search_with_tools(search_term: str = Query(...), date_option: int = Q
         
         try:
             hrefs = extract_links(driver)
+            check_for_captcha(driver, "Extracting Links")
         except TimeoutException as te:
             raise HTTPException(status_code=504, detail="Timeout occurred while extracting links.") from te
         except WebDriverException as we:

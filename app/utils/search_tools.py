@@ -136,7 +136,7 @@ def check_for_captcha(driver, phase):
         if captcha_element:
             message = f"CAPTCHA detected during the {phase} phase! Manual intervention required."
             print(message)
-            raise HTTPException(status_code=429, detail=message)
+            raise HTTPException(status_code=403, detail=message)
     except TimeoutException:
         # No CAPTCHA detected, continue with the operation
         pass
