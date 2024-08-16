@@ -4,7 +4,9 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 from datetime import datetime, timedelta
+from fastapi import HTTPException  # Asegúrate de que esta línea esté presente
 import os
 import json
 
@@ -16,6 +18,7 @@ def calculate_dates(option, days_per_period=30):
 
 def search_on_google(driver, search_term):
     driver.get("https://www.google.com")
+    check_for_captcha(driver, "Google Search Initialization")
     search_box = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.NAME, "q"))
     )
@@ -25,17 +28,20 @@ def search_on_google(driver, search_term):
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, "search"))
     )
+    check_for_captcha(driver, "Search Results")
 
 def apply_filters(driver, date_option):
     tools_button = WebDriverWait(driver, 10).until(
         EC.element_to_be_clickable((By.CSS_SELECTOR, "div.BaegVc.YmvwI#hdtb-tls"))
     )
     tools_button.click()
+    check_for_captcha(driver, "Tools Button Click")
     
     advanced_search_button = WebDriverWait(driver, 10).until(
         EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Búsqueda avanzada') or contains(text(), 'Advanced search')]"))
     )
     advanced_search_button.click()
+    check_for_captcha(driver, "Advanced Search Button Click")
 
     region_button = WebDriverWait(driver, 10).until(
         EC.element_to_be_clickable((By.XPATH, "//div[@id='cr_button']"))
@@ -77,9 +83,11 @@ def apply_filters(driver, date_option):
 def extract_links(driver):
     all_hrefs = []
     while True:
+        check_for_captcha(driver, "Link Extraction - Before Collecting Links")
         div_element = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "div.dURPMd"))
         )
+        check_for_captcha(driver, "Link Extraction - After Collecting Links")
         
         result_links = div_element.find_elements(By.XPATH, ".//a[@href and contains(@href, 'instagram.com')]")
         hrefs = [link.get_attribute("href") for link in result_links]
@@ -87,7 +95,7 @@ def extract_links(driver):
 
         for href in hrefs:
             print(href)
-        
+
         try:
             next_button = driver.find_element(By.ID, "pnnext")
             next_button.click()
@@ -119,3 +127,16 @@ def save_json(result_json, search_term, start_date, end_date):
     with open(filename, 'w') as file:
         json.dump(result_json, file, indent=4)
     return filename
+
+def check_for_captcha(driver, phase):
+    try:
+        captcha_element = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "div#captcha, div.g-recaptcha"))
+        )
+        if captcha_element:
+            message = f"CAPTCHA detected during the {phase} phase! Manual intervention required."
+            print(message)
+            raise HTTPException(status_code=429, detail=message)
+    except TimeoutException:
+        # No CAPTCHA detected, continue with the operation
+        pass

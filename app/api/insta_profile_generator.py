@@ -15,6 +15,7 @@ router = APIRouter()
 
 @router.get("/search-google/", response_model=SearchResult)
 def google_search_with_tools(search_term: str = Query(...), date_option: int = Query(...)):
+    driver = None
     try:
         driver = init_driver()
         search_on_google(driver, search_term)
@@ -34,6 +35,11 @@ def google_search_with_tools(search_term: str = Query(...), date_option: int = Q
         driver.quit()
         
         return SearchResult(**results_json)
+    
+    except HTTPException as e:
+        if driver:
+            driver.quit()
+        raise e
     
     except Exception as e:
         if driver:
