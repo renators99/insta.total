@@ -17,46 +17,19 @@ def calculate_dates(option, days_per_period=30):
     end_date = today - timedelta(days=days_per_period * (option - 1))
     return start_date.strftime('%m/%d/%Y'), end_date.strftime('%m/%d/%Y')
 
-def search_on_google(driver, search_term):
-    driver.get("https://www.google.com")
+def search_on_google(driver):
+    driver.get("https://www.google.com/advanced_search")
     check_for_captcha(driver, "Google Search Initialization")
-    search_box = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.NAME, "q"))
-    )
-    query = f"{search_term} site:instagram.com"
-    search_box.send_keys(query)
-    search_box.send_keys(Keys.RETURN)
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.ID, "search"))
-    )
-    check_for_captcha(driver, "Search Results")
 
-def apply_filters(driver, date_option):
-    try:
-        tools_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "div.BaegVc.YmvwI#hdtb-tls"))
-        )
-        tools_button.click()
-        check_for_captcha(driver, "Tools Button Click")
-    except TimeoutException as te:
-        raise HTTPException(status_code=504, detail="Timeout occurred while waiting for the 'Tools' button.") from te
-    except NoSuchElementException as nse:
-        raise HTTPException(status_code=404, detail="The 'Tools' button was not found.") from nse
-    except WebDriverException as we:
-        raise HTTPException(status_code=500, detail="WebDriver encountered an error while clicking the 'Tools' button.") from we
+def apply_filters(driver, search_term, date_option):
 
-    try:
-        advanced_search_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Búsqueda avanzada') or contains(text(), 'Advanced search')]"))
-        )
-        advanced_search_button.click()
-        check_for_captcha(driver, "Advanced Search Button Click")
-    except TimeoutException as te:
-        raise HTTPException(status_code=504, detail="Timeout occurred while waiting for the 'Advanced Search' button.") from te
-    except NoSuchElementException as nse:
-        raise HTTPException(status_code=404, detail="The 'Advanced Search' button was not found.") from nse
-    except WebDriverException as we:
-        raise HTTPException(status_code=500, detail="WebDriver encountered an error while clicking the 'Advanced Search' button.") from we
+    # Encontrar el campo de búsqueda por nombre y enviar el término de búsqueda
+    search_input = driver.find_element(By.NAME, "as_q")
+    search_input.send_keys(search_term)
+    
+    # Encontrar el campo para "as_sitesearch" por id y establecer el valor en "instagram.com"
+    site_search_input = driver.find_element(By.ID, "NqEkZd")
+    site_search_input.send_keys("instagram.com")
 
     try:
         region_button = WebDriverWait(driver, 10).until(

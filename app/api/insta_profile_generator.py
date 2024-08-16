@@ -19,8 +19,8 @@ def google_search_with_tools(search_term: str = Query(...), date_option: int = Q
     driver = None
     try:
         driver = init_driver()
-        search_on_google(driver, search_term)
-        apply_filters(driver, date_option)
+        search_on_google(driver)
+        apply_filters(driver, search_term, date_option)
         result_count = extract_result_count(driver)
         hrefs = extract_links(driver)
         
