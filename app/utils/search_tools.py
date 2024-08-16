@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
 from datetime import datetime, timedelta
 from fastapi import HTTPException  # Asegúrate de que esta línea esté presente
 import os
@@ -31,54 +32,110 @@ def search_on_google(driver, search_term):
     check_for_captcha(driver, "Search Results")
 
 def apply_filters(driver, date_option):
-    tools_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.CSS_SELECTOR, "div.BaegVc.YmvwI#hdtb-tls"))
-    )
-    tools_button.click()
-    check_for_captcha(driver, "Tools Button Click")
-    
-    advanced_search_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Búsqueda avanzada') or contains(text(), 'Advanced search')]"))
-    )
-    advanced_search_button.click()
-    check_for_captcha(driver, "Advanced Search Button Click")
+    try:
+        tools_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "div.BaegVc.YmvwI#hdtb-tls"))
+        )
+        tools_button.click()
+        check_for_captcha(driver, "Tools Button Click")
+    except TimeoutException as te:
+        raise HTTPException(status_code=504, detail="Timeout occurred while waiting for the 'Tools' button.") from te
+    except NoSuchElementException as nse:
+        raise HTTPException(status_code=404, detail="The 'Tools' button was not found.") from nse
+    except WebDriverException as we:
+        raise HTTPException(status_code=500, detail="WebDriver encountered an error while clicking the 'Tools' button.") from we
 
-    region_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//div[@id='cr_button']"))
-    )
-    region_button.click()
-    us_option = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//li[@value='countryUS']//div[contains(text(), 'Estados Unidos') or contains(text(), 'United States')]"))
-    )
-    us_option.click()
+    try:
+        advanced_search_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Búsqueda avanzada') or contains(text(), 'Advanced search')]"))
+        )
+        advanced_search_button.click()
+        check_for_captcha(driver, "Advanced Search Button Click")
+    except TimeoutException as te:
+        raise HTTPException(status_code=504, detail="Timeout occurred while waiting for the 'Advanced Search' button.") from te
+    except NoSuchElementException as nse:
+        raise HTTPException(status_code=404, detail="The 'Advanced Search' button was not found.") from nse
+    except WebDriverException as we:
+        raise HTTPException(status_code=500, detail="WebDriver encountered an error while clicking the 'Advanced Search' button.") from we
 
-    search_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//input[@value='Búsqueda avanzada' or @value='Advanced search']"))
-    )
-    search_button.click()
+    try:
+        region_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//div[@id='cr_button']"))
+        )
+        region_button.click()
+        us_option = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//li[@value='countryUS']//div[contains(text(), 'Estados Unidos') or contains(text(), 'United States')]"))
+        )
+        us_option.click()
+    except TimeoutException as te:
+        raise HTTPException(status_code=504, detail="Timeout occurred while selecting the region filter.") from te
+    except NoSuchElementException as nse:
+        raise HTTPException(status_code=404, detail="The region filter option was not found.") from nse
+    except WebDriverException as we:
+        raise HTTPException(status_code=500, detail="WebDriver encountered an error while selecting the region filter.") from we
 
-    any_date_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'De cualquier fecha') or contains(text(), 'Any time')]"))
-    )
-    any_date_button.click()
+    try:
+        search_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//input[@value='Búsqueda avanzada' or @value='Advanced search']"))
+        )
+        search_button.click()
+    except TimeoutException as te:
+        raise HTTPException(status_code=504, detail="Timeout occurred while waiting for the 'Advanced Search' button.") from te
+    except NoSuchElementException as nse:
+        raise HTTPException(status_code=404, detail="The 'Advanced Search' button was not found.") from nse
+    except WebDriverException as we:
+        raise HTTPException(status_code=500, detail="WebDriver encountered an error while clicking the 'Advanced Search' button.") from we
 
-    customize_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//span[@role='menuitem' and (contains(text(), 'Personalizar...') or contains(text(), 'Custom range...'))]"))
-    )
-    customize_button.click()
+    try:
+        any_date_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'De cualquier fecha') or contains(text(), 'Any time')]"))
+        )
+        any_date_button.click()
+    except TimeoutException as te:
+        raise HTTPException(status_code=504, detail="Timeout occurred while waiting for the 'Any time' button.") from te
+    except NoSuchElementException as nse:
+        raise HTTPException(status_code=404, detail="The 'Any time' button was not found.") from nse
+    except WebDriverException as we:
+        raise HTTPException(status_code=500, detail="WebDriver encountered an error while clicking the 'Any time' button.") from we
 
-    start_date, end_date = calculate_dates(date_option)
-    start_date_input = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.ID, "OouJcb"))
-    )
-    end_date_input = driver.find_element(By.ID, "rzG2be")
-    start_date_input.send_keys(start_date)
-    end_date_input.send_keys(end_date)
+    try:
+        customize_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//span[@role='menuitem' and (contains(text(), 'Personalizar...') or contains(text(), 'Custom range...'))]"))
+        )
+        customize_button.click()
+    except TimeoutException as te:
+        raise HTTPException(status_code=504, detail="Timeout occurred while waiting for the 'Custom range' button.") from te
+    except NoSuchElementException as nse:
+        raise HTTPException(status_code=404, detail="The 'Custom range' button was not found.") from nse
+    except WebDriverException as we:
+        raise HTTPException(status_code=500, detail="WebDriver encountered an error while clicking the 'Custom range' button.") from we
 
-    go_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//g-button[contains(@class, 'Ru1Ao BwGU8e fE5Rge') or contains(@class, 'Ru1Ao BwGU8e fE5Rge')]"))
-    )
-    go_button.click()
+    try:
+        start_date, end_date = calculate_dates(date_option)
+        start_date_input = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "OouJcb"))
+        )
+        end_date_input = driver.find_element(By.ID, "rzG2be")
+        start_date_input.send_keys(start_date)
+        end_date_input.send_keys(end_date)
+    except TimeoutException as te:
+        raise HTTPException(status_code=504, detail="Timeout occurred while entering date range.") from te
+    except NoSuchElementException as nse:
+        raise HTTPException(status_code=404, detail="Date input fields were not found.") from nse
+    except WebDriverException as we:
+        raise HTTPException(status_code=500, detail="WebDriver encountered an error while entering date range.") from we
+
+    try:
+        go_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//g-button[contains(@class, 'Ru1Ao BwGU8e fE5Rge') or contains(@class, 'Ru1Ao BwGU8e fE5Rge')]"))
+        )
+        go_button.click()
+    except TimeoutException as te:
+        raise HTTPException(status_code=504, detail="Timeout occurred while waiting for the 'Go' button.") from te
+    except NoSuchElementException as nse:
+        raise HTTPException(status_code=404, detail="The 'Go' button was not found.") from nse
+    except WebDriverException as we:
+        raise HTTPException(status_code=500, detail="WebDriver encountered an error while clicking the 'Go' button.") from we
 
 def extract_links(driver):
     all_hrefs = []
