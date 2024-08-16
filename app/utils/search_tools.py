@@ -47,18 +47,9 @@ def apply_filters(driver, search_term, date_option):
     except WebDriverException as we:
         raise HTTPException(status_code=500, detail="WebDriver encountered an error while selecting the region filter.") from we
 
-    try:
-        search_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, "//input[@value='Búsqueda avanzada' or @value='Advanced search']"))
-        )
-        search_button.click()
-    except TimeoutException as te:
-        raise HTTPException(status_code=504, detail="Timeout occurred while waiting for the 'Advanced Search' button.") from te
-    except NoSuchElementException as nse:
-        raise HTTPException(status_code=404, detail="The 'Advanced Search' button was not found.") from nse
-    except WebDriverException as we:
-        raise HTTPException(status_code=500, detail="WebDriver encountered an error while clicking the 'Advanced Search' button.") from we
-
+    # Enviar el formulario
+    search_input.send_keys(Keys.RETURN)
+    
     try:
         any_date_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'De cualquier fecha') or contains(text(), 'Any time')]"))
